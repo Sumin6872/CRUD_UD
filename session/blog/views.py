@@ -1,6 +1,6 @@
 from django.shortcuts import render,get_object_or_404,redirect
-from django.core.paginator import Paginator
-from .models import Blog
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+from .models import Blog, Post
 from .forms import BlogForm
 
 
@@ -67,6 +67,36 @@ def delete(request, blog_id):
     delete_blog = get_object_or_404(Blog, pk=blog_id)
     delete_blog.delete()
     return redirect('home')
+
+def post_list(request):
+    post_list = Post.objects.all()
+    page = request.GET.get('page')
+    
+    paginator = Paginator(post_list, 20)
+    
+    try:
+        page_obj = paginator.page(page)
+        
+    except PageNotAnInteger:
+        page = 1
+        page_obj = paginator.page(page)
+        
+    except EmptyPage:
+        page = paginator.num_pages
+        page_obj = paginator.page(page)
+        
+    leftIndex = (int(page) - 2)
+    if leftIndex < 1:
+        leftIndex = 1
+    
+    rightIndex = (int(page) + 2)
+    if rightIndex > paginator.num_pages:
+        rightIndex = paginator.num_pages
+        
+    custom_range = range(leftIndex, rightIndex + 1)
+    
+    return render(request, 'post_list.html', {'post_list':post_list, 'page_obj':page_obj, 'paginator':paginator, 'custom_range':custom_range})
+
 
 
 
